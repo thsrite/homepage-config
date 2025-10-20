@@ -1,16 +1,26 @@
 # Build stage
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies
+# Install complete build dependencies for all architectures
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
+    libc-dev \
+    make \
+    python3-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Upgrade pip and install requirements
+# Try to install optional performance dependencies, but continue if they fail
+RUN pip install --upgrade pip && \
+    pip install --user --no-cache-dir -r requirements.txt && \
+    (pip install --user --no-cache-dir httptools uvloop watchfiles websockets || true)
 
 # Runtime stage
 FROM python:3.11-slim
