@@ -1,8 +1,8 @@
 # Homepage Configuration Tool
 
-[![Docker Build](https://github.com/yourusername/homepage-config/actions/workflows/docker-build.yml/badge.svg)](https://github.com/yourusername/homepage-config/actions/workflows/docker-build.yml)
+[![Docker Build](https://github.com/thsrite/homepage-config/actions/workflows/docker-build.yml/badge.svg)](https://github.com/thsrite/homepage-config/actions/workflows/docker-build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker Pulls](https://img.shields.io/docker/pulls/yourusername/homepage-config)](https://hub.docker.com/r/yourusername/homepage-config)
+[![Docker Pulls](https://img.shields.io/docker/pulls/thsrite/homepage-config)](https://hub.docker.com/r/thsrite/homepage-config)
 
 A web-based configuration tool for [Homepage](https://gethomepage.dev/) dashboard. This tool provides a visual interface to create and manage Homepage service configurations without manually editing YAML files.
 
@@ -28,7 +28,7 @@ A web-based configuration tool for [Homepage](https://gethomepage.dev/) dashboar
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/homepage-config.git
+git clone https://github.com/thsrite/homepage-config.git
 cd homepage-config
 
 # Start with docker-compose
@@ -73,7 +73,7 @@ docker run -d \
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/homepage-config.git
+git clone https://github.com/thsrite/homepage-config.git
 cd homepage-config
 ```
 
@@ -369,7 +369,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For issues, questions, or suggestions:
 1. Check the [troubleshooting](#-troubleshooting) section
 2. Review [Homepage documentation](https://gethomepage.dev/)
-3. Open an [issue on GitHub](https://github.com/yourusername/homepage-config/issues)
+3. Open an [issue on GitHub](https://github.com/thsrite/homepage-config/issues)
 
 ## 🗺️ Roadmap
 

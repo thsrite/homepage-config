@@ -1,68 +1,53 @@
+# Git
+.git/
+.gitignore
+.github/
+
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.python-version
+*.py[cod]
+*$py.class
+*.so
+.Python
 *.egg-info/
 dist/
 build/
-
-# Virtual environment
+.venv/
 venv/
 ENV/
 env/
-.venv/
-.ENV/
 
 # IDE
 .idea/
 .vscode/
-*.iml
-*.iws
-*.ipr
+*.swp
+*.swo
+*~
 
-# Git
-.git/
-.gitignore
-.gitattributes
-
-# Documentation
-*.md
-!README.md
-docs/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-test*.py
-
-# Config files (will be mounted as volumes)
-configs/*.yaml
-configs/*.yml
-!configs/example.yaml
-
-# Uploads (will be mounted as volume)
-uploads/
-
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp
+# Project specific
+configs/
+uploads/
 *.log
-*.bak
+*.pid
+*.seed
+*.pid.lock
 
-# Docker files (not needed in build context)
-docker-compose.override.yml
-Dockerfile.*
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
 
-# CI/CD
-.github/
+# Docs
+*.md
+LICENSE
+docs/
 
-# Development files
-run_dev.py
-test.html
+# Tests
+tests/
+*.test.py
+.pytest_cache/
+.coverage
