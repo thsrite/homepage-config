@@ -48,7 +48,7 @@ docker-compose up -d
 docker run -d \
   --name homepage-config \
   -p 9835:9835 \
-  -v ./homepage/services.yaml:/app/configs/services.yaml \
+  -v ./homepage/services.yaml:/app/config/services.yaml \
   --restart unless-stopped \
   thsrite/homepage-config:latest
 ```
@@ -59,7 +59,7 @@ docker run -d \
 docker run -d \
   --name homepage-config \
   -p 9835:9835 \
-  -v ./homepage/services.yaml:/app/configs/services.yaml \
+  -v ./homepage/services.yaml:/app/config/services.yaml \
   thsrite/homepage-config:latest
 ```
 
@@ -164,7 +164,7 @@ docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 \
 |----------|-------------|---------|
 | `PORT` | Application port | `9835` |
 | `DEBUG` | Enable debug mode | `false` |
-| `CONFIG_PATH` | Configuration file path | `configs/services.yaml` |
+| `CONFIG_PATH` | Configuration file path | `config/services.yaml` |
 
 ### Docker Compose Configuration
 
@@ -179,7 +179,7 @@ services:
     ports:
       - "9835:9835"
     volumes:
-      - ./homepage/services.yaml:/app/configs/services.yaml
+      - ./homepage/services.yaml:/app/config/services.yaml
     environment:
       - PORT=9835
       - DEBUG=false
@@ -189,8 +189,8 @@ services:
 
 ### File Locations
 
-- **Generated config**: `configs/services.yaml`
-- **Backups**: `configs/backups/`
+- **Generated config**: `config/services.yaml`
+- **Backups**: `config/backups/`
 - **Uploads**: `uploads/`
 
 ### Widget Configuration Examples
@@ -256,7 +256,7 @@ homepage-config/
 ├── frontend/         # HTML/JS frontend
 │   ├── static/       # CSS, JS, images
 │   └── index.html    # Main page
-├── configs/          # Configuration files
+├── config/          # Configuration files
 ├── .github/          # GitHub Actions workflows
 ├── requirements.txt  # Python dependencies
 ├── Dockerfile        # Docker image definition
