@@ -37,7 +37,10 @@ class YAMLHandler:
                          default_flow_style=False,
                          allow_unicode=True,
                          sort_keys=False,
-                         indent=4)
+                         indent=2,  # Homepage uses 2-space indentation
+                         default_style=None,
+                         explicit_start=False,
+                         explicit_end=False)
             return True
         except Exception as e:
             print(f"Error saving config: {e}")

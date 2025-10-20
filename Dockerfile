@@ -15,28 +15,23 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -m -u 1000 homepage && \
-    mkdir -p /app/configs /app/uploads && \
-    chown -R homepage:homepage /app
-
 # Copy Python dependencies from builder
-COPY --from=builder /root/.local /home/homepage/.local
+COPY --from=builder /root/.local /usr/local
 
 # Copy application files
-COPY --chown=homepage:homepage backend/ ./backend/
-COPY --chown=homepage:homepage frontend/ ./frontend/
-COPY --chown=homepage:homepage run.py .
-COPY --chown=homepage:homepage requirements.txt .
+COPY backend/ ./backend/
+COPY frontend/ ./frontend/
+COPY run.py .
+COPY requirements.txt .
+COPY entrypoint.sh .
 
-# Switch to non-root user
-USER homepage
-
-# Add user's local bin to PATH
-ENV PATH=/home/homepage/.local/bin:$PATH
+# Create directories and set entrypoint permissions
+RUN mkdir -p /app/configs /app/uploads && \
+    chmod -R 777 /app/configs /app/uploads && \
+    chmod +x entrypoint.sh
 
 # Expose port
 EXPOSE 9835
 
-# Run the application
-CMD ["python", "run.py"]
+# Use entrypoint to handle permissions
+ENTRYPOINT ["/app/entrypoint.sh"]
