@@ -1,0 +1,53 @@
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from pathlib import Path
+import sys
+
+# Add backend to path
+sys.path.append(str(Path(__file__).parent))
+
+from api import services, categories, import_export, preview
+from core.config import settings
+
+app = FastAPI(
+    title="Homepage Configuration Tool",
+    description="Web-based configuration tool for Homepage dashboard",
+    version="1.0.0"
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files
+static_path = Path(__file__).parent.parent / "frontend" / "static"
+app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+
+# Include routers
+app.include_router(services.router, prefix="/api/services", tags=["services"])
+app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
+app.include_router(import_export.router, prefix="/api/config", tags=["config"])
+app.include_router(preview.router, prefix="/api/preview", tags=["preview"])
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Serve the main HTML page"""
+    html_path = Path(__file__).parent.parent / "frontend" / "index.html"
+    with open(html_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "Homepage Config Tool"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

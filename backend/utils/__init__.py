@@ -1,0 +1,1 @@
+# Utility functions for Homepage Configuration Tool

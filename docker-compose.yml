@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  homepage-config:
+    image: thsrite/homepage-config:latest
+    container_name: homepage-config
+    restart: unless-stopped
+    ports:
+      - "9835:9835"
+    volumes:
+      # Mount configs directory to persist configuration
+      - ./configs:/app/configs
+      - ./homepage/services.yaml:/app/configs/services.yaml
+      # Optional: Mount uploads directory
+      - ./uploads:/app/uploads
+    environment:
+      # Optional: Override port if needed
+      - PORT=9835
+      # Optional: Set debug mode
+      - DEBUG=false
+    labels:
+      - "com.docker.description=Homepage Configuration Tool"
+      - "com.docker.project=homepage-config"
+    networks:
+      - homepage-network
+
+networks:
+  homepage-network:
+    driver: bridge
+    name: homepage-network

@@ -1,0 +1,33 @@
+- Media:
+    - Emby:
+        icon: https://example.com/emby-icon.png
+        href: http://10.0.0.2:8096
+        ping: http://10.0.0.2:8096
+        server: unraid
+        container: emby
+        widget:
+            type: emby
+            url: http://10.0.0.2:8096
+            key: your_api_key_here
+            enableBlocks: true
+            enableNowPlaying: true
+
+    - Plex:
+        icon: https://example.com/plex-icon.png
+        href: http://10.0.0.2:32400
+        ping: http://10.0.0.2:32400
+        server: unraid
+        container: plex
+
+- Tools:
+    - FileBrowser:
+        icon: https://example.com/filebrowser-icon.png
+        href: http://10.0.0.2:380
+        ping: http://10.0.0.2:380
+        server: unraid
+        container: FileBrowser
+
+    - Portainer:
+        icon: https://example.com/portainer-icon.png
+        href: http://10.0.0.2:9000
+        ping: http://10.0.0.2:9000
