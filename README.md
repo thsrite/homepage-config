@@ -44,7 +44,6 @@ docker-compose up -d
 docker run -d \
   --name homepage-config \
   -p 9835:9835 \
-  -v ./configs:/app/configs \
   -v ./homepage/services.yaml:/app/configs/services.yaml \
   --restart unless-stopped \
   thsrite/homepage-config:latest
@@ -56,7 +55,6 @@ docker run -d \
 docker run -d \
   --name homepage-config \
   -p 9835:9835 \
-  -v ./configs:/app/configs \
   -v ./homepage/services.yaml:/app/configs/services.yaml \
   thsrite/homepage-config:latest
 ```
@@ -177,46 +175,10 @@ services:
     ports:
       - "9835:9835"
     volumes:
-      - ./configs:/app/configs
       - ./homepage/services.yaml:/app/configs/services.yaml
     environment:
       - PORT=9835
       - DEBUG=false
-```
-
-### Using with Homepage
-
-To use alongside Homepage in the same Docker network:
-
-```yaml
-version: '3.8'
-
-services:
-  homepage:
-    image: ghcr.io/benphelps/homepage:latest
-    container_name: homepage
-    ports:
-      - 3000:3000
-    volumes:
-      - ./homepage-config:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - homepage-network
-
-  homepage-config:
-    image: thsrite/homepage-config:latest
-    container_name: homepage-config
-    ports:
-      - 9835:9835
-    volumes:
-      - ./homepage-config:/app/configs
-      - ./homepage/services.yaml:/app/configs/services.yaml
-    networks:
-      - homepage-network
-
-networks:
-  homepage-network:
-    driver: bridge
 ```
 
 ## 🔧 Configuration

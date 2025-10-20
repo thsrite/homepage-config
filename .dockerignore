@@ -29,7 +29,7 @@ env/
 Thumbs.db
 
 # Project specific
-configs/
+config/
 uploads/
 *.log
 *.pid

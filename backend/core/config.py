@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # File paths
-    config_path: str = "configs/services.yaml"
-    example_config_path: str = "configs/example.yaml"
+    config_path: str = "config/services.yaml"
+    example_config_path: str = "config/example.yaml"
     upload_dir: str = "uploads"
 
     # API configuration

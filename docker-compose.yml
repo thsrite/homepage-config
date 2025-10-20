@@ -8,9 +8,8 @@ services:
     ports:
       - "9835:9835"
     volumes:
-      # Mount configs directory to persist configuration
-      - ./configs:/app/configs
-      - ./homepage/services.yaml:/app/configs/services.yaml
+      # Mount config directory to persist configuration
+      - ./homepage/services.yaml:/app/config/services.yaml
     environment:
       # Optional: Override port if needed
       - PORT=9835

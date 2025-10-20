@@ -40,10 +40,10 @@ env/
 *.code-workspace
 
 # Configuration files (user data)
-configs/*.yaml
-configs/*.yml
-!configs/example.yaml
-configs/backups/
+config/*.yaml
+config/*.yml
+!config/example.yaml
+config/backups/
 
 # Upload directory
 uploads/

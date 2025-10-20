@@ -6,7 +6,7 @@ import copy
 class YAMLHandler:
     """Handle YAML parsing and generation for Homepage configuration"""
 
-    def __init__(self, config_path: str = "configs/services.yaml"):
+    def __init__(self, config_path: str = "config/services.yaml"):
         self.config_path = Path(config_path)
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -17,10 +17,26 @@ class YAMLHandler:
 
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
-                content = yaml.safe_load(f)
+                # Read content and clean tabs
+                raw_content = f.read()
+
+                # Replace tabs with spaces and clean up
+                lines = raw_content.split('\n')
+                cleaned_lines = []
+                for line in lines:
+                    # Replace tabs with 2 spaces and remove trailing whitespace
+                    cleaned_line = line.replace('\t', '  ').rstrip()
+                    cleaned_lines.append(cleaned_line)
+                cleaned_content = '\n'.join(cleaned_lines)
+
+                # Parse cleaned YAML
+                content = yaml.safe_load(cleaned_content)
                 return content if content else []
         except Exception as e:
             print(f"Error loading config: {e}")
+            # Try to provide more specific error info
+            if 'tab' in str(e).lower() or '\t' in str(e):
+                print("Note: Tab characters found in YAML file. They have been replaced with spaces.")
             return []
 
     def save_config(self, config: List[Dict[str, Any]]) -> bool:

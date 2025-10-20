@@ -158,7 +158,7 @@ async def create_backup():
             raise HTTPException(status_code=404, detail="No configuration to backup")
 
         # Create backup directory
-        backup_dir = Path("configs/backups")
+        backup_dir = Path("config/backups")
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         # Create backup with timestamp
