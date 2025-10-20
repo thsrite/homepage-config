@@ -6,6 +6,10 @@
 
 A web-based configuration tool for [Homepage](https://gethomepage.dev/) dashboard. This tool provides a visual interface to create and manage Homepage service configurations without manually editing YAML files.
 
+<div align="center">
+    <img src="homepage-config.png" alt="IPTV Stream Sniffer" width="100">
+</div>
+
 ## ✨ Features
 
 - 🎨 **Visual Configuration Editor** - Add, edit, and delete services through a user-friendly interface
