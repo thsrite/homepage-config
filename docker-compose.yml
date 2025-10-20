@@ -11,8 +11,6 @@ services:
       # Mount configs directory to persist configuration
       - ./configs:/app/configs
       - ./homepage/services.yaml:/app/configs/services.yaml
-      # Optional: Mount uploads directory
-      - ./uploads:/app/uploads
     environment:
       # Optional: Override port if needed
       - PORT=9835

@@ -46,7 +46,6 @@ docker run -d \
   -p 9835:9835 \
   -v ./configs:/app/configs \
   -v ./homepage/services.yaml:/app/configs/services.yaml \
-  -v ./uploads:/app/uploads \
   --restart unless-stopped \
   thsrite/homepage-config:latest
 ```
@@ -180,7 +179,6 @@ services:
     volumes:
       - ./configs:/app/configs
       - ./homepage/services.yaml:/app/configs/services.yaml
-      - ./uploads:/app/uploads
     environment:
       - PORT=9835
       - DEBUG=false
