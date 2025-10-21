@@ -25,6 +25,17 @@ function setupEventListeners() {
         document.getElementById('serviceForm').reset();
         editingService = null;
     });
+
+    // Tab change events
+    const bookmarksTab = document.getElementById('bookmarks-tab');
+    if (bookmarksTab) {
+        bookmarksTab.addEventListener('shown.bs.tab', () => {
+            // Load bookmarks when tab is shown
+            if (typeof loadBookmarks === 'function') {
+                loadBookmarks();
+            }
+        });
+    }
 }
 
 // Load configuration from backend

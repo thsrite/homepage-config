@@ -10,6 +10,7 @@ services:
     volumes:
       # Mount config directory to persist configuration
       - ./homepage/services.yaml:/app/config/services.yaml
+      - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
     environment:
       # Optional: Override port if needed
       - PORT=9835

@@ -8,7 +8,7 @@ import sys
 # Add backend to path
 sys.path.append(str(Path(__file__).parent))
 
-from api import services, categories, import_export, preview
+from api import services, categories, import_export, preview, bookmarks
 from core.config import settings
 
 app = FastAPI(
@@ -35,6 +35,7 @@ app.include_router(services.router, prefix="/api/services", tags=["services"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
 app.include_router(import_export.router, prefix="/api/config", tags=["config"])
 app.include_router(preview.router, prefix="/api/preview", tags=["preview"])
+app.include_router(bookmarks.router, prefix="/api/bookmarks", tags=["bookmarks"])
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

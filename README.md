@@ -49,6 +49,7 @@ docker run -d \
   --name homepage-config \
   -p 9835:9835 \
   -v ./homepage/services.yaml:/app/config/services.yaml \
+  -v ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml \
   --restart unless-stopped \
   thsrite/homepage-config:latest
 ```
@@ -60,6 +61,7 @@ docker run -d \
   --name homepage-config \
   -p 9835:9835 \
   -v ./homepage/services.yaml:/app/config/services.yaml \
+  -v ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml \
   thsrite/homepage-config:latest
 ```
 

@@ -1,5 +1,6 @@
 from .service import Service, ServiceCreate, ServiceUpdate, ServiceConfig
 from .widget import Widget, WidgetConfig
+from .bookmark import Bookmark, BookmarkGroup, BookmarkCreate, BookmarkUpdate, BookmarkGroupCreate
 
 __all__ = [
     'Service',
@@ -7,5 +8,10 @@ __all__ = [
     'ServiceUpdate',
     'ServiceConfig',
     'Widget',
-    'WidgetConfig'
+    'WidgetConfig',
+    'Bookmark',
+    'BookmarkGroup',
+    'BookmarkCreate',
+    'BookmarkUpdate',
+    'BookmarkGroupCreate'
 ]
