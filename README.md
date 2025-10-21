@@ -10,6 +10,8 @@ A web-based configuration tool for [Homepage](https://gethomepage.dev/) dashboar
     <img src="homepage-config.png" alt="IPTV Stream Sniffer" width="100">
 </div>
 
+![image.png](image.png)
+
 ## ✨ Features
 
 - 🎨 **Visual Configuration Editor** - Add, edit, and delete services through a user-friendly interface
