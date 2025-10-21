@@ -182,6 +182,7 @@ services:
       - "9835:9835"
     volumes:
       - ./homepage/services.yaml:/app/config/services.yaml
+      - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
     environment:
       - PORT=9835
       - DEBUG=false
