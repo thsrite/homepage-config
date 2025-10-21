@@ -1,5 +1,5 @@
 import yaml
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from pathlib import Path
 import copy
 
@@ -10,8 +10,10 @@ class YAMLHandler:
         self.config_path = Path(config_path)
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def load_config(self) -> List[Dict[str, Any]]:
-        """Load configuration from YAML file"""
+    def load_config(self) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+        """Load configuration from YAML file
+        Returns either a list (standard format) or dict (direct format)
+        """
         if not self.config_path.exists():
             return []
 
@@ -31,7 +33,11 @@ class YAMLHandler:
 
                 # Parse cleaned YAML
                 content = yaml.safe_load(cleaned_content)
-                return content if content else []
+
+                # Return content as-is, whether it's a list or dict
+                if content is None:
+                    return []
+                return content
         except Exception as e:
             print(f"Error loading config: {e}")
             # Try to provide more specific error info
@@ -62,23 +68,46 @@ class YAMLHandler:
             print(f"Error saving config: {e}")
             return False
 
-    def parse_services(self, config: List[Dict[str, Any]]) -> Dict[str, List[Dict]]:
-        """Parse services from configuration into categories"""
+    def parse_services(self, config: Union[List[Dict[str, Any]], Dict[str, Any]]) -> Dict[str, List[Dict]]:
+        """Parse services from configuration into categories
+        Supports both formats:
+        1. List format: [{"Media": [...]}, {"Tools": [...]}]
+        2. Direct format: {"Media": [...], "Tools": [...]}
+        """
         result = {}
 
-        for item in config:
-            if isinstance(item, dict):
-                for category_name, services in item.items():
-                    if isinstance(services, list):
-                        result[category_name] = []
-                        for service in services:
-                            if isinstance(service, dict):
-                                for service_name, service_config in service.items():
-                                    parsed_service = {
-                                        'name': service_name,
-                                        'config': service_config if service_config else {}
-                                    }
-                                    result[category_name].append(parsed_service)
+        # If config is a dict (direct format without list wrapper)
+        if isinstance(config, dict):
+            for category_name, services in config.items():
+                if isinstance(services, list):
+                    result[category_name] = []
+                    for service in services:
+                        if isinstance(service, dict):
+                            for service_name, service_config in service.items():
+                                # Convert numeric keys to strings
+                                service_name = str(service_name)
+                                parsed_service = {
+                                    'name': service_name,
+                                    'config': service_config if service_config else {}
+                                }
+                                result[category_name].append(parsed_service)
+        # If config is a list (standard format)
+        elif isinstance(config, list):
+            for item in config:
+                if isinstance(item, dict):
+                    for category_name, services in item.items():
+                        if isinstance(services, list):
+                            result[category_name] = []
+                            for service in services:
+                                if isinstance(service, dict):
+                                    for service_name, service_config in service.items():
+                                        # Convert numeric keys to strings
+                                        service_name = str(service_name)
+                                        parsed_service = {
+                                            'name': service_name,
+                                            'config': service_config if service_config else {}
+                                        }
+                                        result[category_name].append(parsed_service)
 
         return result
 
@@ -248,8 +277,17 @@ class YAMLHandler:
     def export_yaml(self) -> str:
         """Export configuration as YAML string"""
         config = self.load_config()
+
+        # Ensure we always export in list format for consistency
+        if isinstance(config, dict):
+            # Convert dict format to list format
+            list_config = []
+            for category_name, services in config.items():
+                list_config.append({category_name: services})
+            config = list_config
+
         return yaml.dump(config,
                         default_flow_style=False,
                         allow_unicode=True,
                         sort_keys=False,
-                        indent=4)
+                        indent=2)  # Use 2-space indent for Homepage compatibility

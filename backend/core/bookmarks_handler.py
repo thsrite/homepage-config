@@ -1,5 +1,5 @@
 import yaml
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from pathlib import Path
 
 class BookmarksHandler:
@@ -9,8 +9,10 @@ class BookmarksHandler:
         self.bookmarks_path = Path(bookmarks_path)
         self.bookmarks_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def load_bookmarks(self) -> List[Dict[str, Any]]:
-        """Load bookmarks configuration from YAML file"""
+    def load_bookmarks(self) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+        """Load bookmarks configuration from YAML file
+        Returns either a list (standard format) or dict (direct format)
+        """
         if not self.bookmarks_path.exists():
             return []
 
@@ -30,7 +32,11 @@ class BookmarksHandler:
 
                 # Parse cleaned YAML
                 content = yaml.safe_load(cleaned_content)
-                return content if content else []
+
+                # Return content as-is, whether it's a list or dict
+                if content is None:
+                    return []
+                return content
         except Exception as e:
             print(f"Error loading bookmarks: {e}")
             return []
@@ -58,23 +64,46 @@ class BookmarksHandler:
             print(f"Error saving bookmarks: {e}")
             return False
 
-    def parse_bookmarks(self, config: List[Dict[str, Any]]) -> Dict[str, List[Dict]]:
-        """Parse bookmarks from configuration into groups"""
+    def parse_bookmarks(self, config: Union[List[Dict[str, Any]], Dict[str, Any]]) -> Dict[str, List[Dict]]:
+        """Parse bookmarks from configuration into groups
+        Supports both formats:
+        1. List format: [{"Developer": [...]}, {"Social": [...]}]
+        2. Direct format: {"Developer": [...], "Social": [...]}
+        """
         result = {}
 
-        for item in config:
-            if isinstance(item, dict):
-                for group_name, bookmarks in item.items():
-                    if isinstance(bookmarks, list):
-                        result[group_name] = []
-                        for bookmark in bookmarks:
-                            if isinstance(bookmark, dict):
-                                for bookmark_name, bookmark_config in bookmark.items():
-                                    parsed_bookmark = {
-                                        'name': bookmark_name,
-                                        'config': bookmark_config if bookmark_config else {}
-                                    }
-                                    result[group_name].append(parsed_bookmark)
+        # If config is a dict (direct format without list wrapper)
+        if isinstance(config, dict):
+            for group_name, bookmarks in config.items():
+                if isinstance(bookmarks, list):
+                    result[group_name] = []
+                    for bookmark in bookmarks:
+                        if isinstance(bookmark, dict):
+                            for bookmark_name, bookmark_config in bookmark.items():
+                                # Convert numeric keys to strings
+                                bookmark_name = str(bookmark_name)
+                                parsed_bookmark = {
+                                    'name': bookmark_name,
+                                    'config': bookmark_config if bookmark_config else {}
+                                }
+                                result[group_name].append(parsed_bookmark)
+        # If config is a list (standard format)
+        elif isinstance(config, list):
+            for item in config:
+                if isinstance(item, dict):
+                    for group_name, bookmarks in item.items():
+                        if isinstance(bookmarks, list):
+                            result[group_name] = []
+                            for bookmark in bookmarks:
+                                if isinstance(bookmark, dict):
+                                    for bookmark_name, bookmark_config in bookmark.items():
+                                        # Convert numeric keys to strings
+                                        bookmark_name = str(bookmark_name)
+                                        parsed_bookmark = {
+                                            'name': bookmark_name,
+                                            'config': bookmark_config if bookmark_config else {}
+                                        }
+                                        result[group_name].append(parsed_bookmark)
 
         return result
 
@@ -160,6 +189,15 @@ class BookmarksHandler:
     def export_yaml(self) -> str:
         """Export bookmarks as YAML string"""
         bookmarks = self.load_bookmarks()
+
+        # Ensure we always export in list format for consistency
+        if isinstance(bookmarks, dict):
+            # Convert dict format to list format
+            list_bookmarks = []
+            for group_name, group_bookmarks in bookmarks.items():
+                list_bookmarks.append({group_name: group_bookmarks})
+            bookmarks = list_bookmarks
+
         return yaml.dump(bookmarks,
                         default_flow_style=False,
                         allow_unicode=True,
@@ -169,6 +207,10 @@ class BookmarksHandler:
     def import_yaml(self, yaml_content: str) -> bool:
         """Import bookmarks from YAML string"""
         try:
+            # Remove document separator if present
+            if yaml_content.startswith('---'):
+                yaml_content = yaml_content[3:].strip()
+
             # Clean up tabs and trailing spaces
             lines = yaml_content.split('\n')
             cleaned_lines = []
@@ -179,9 +221,15 @@ class BookmarksHandler:
 
             # Parse and save
             bookmarks = yaml.safe_load(yaml_content)
-            if bookmarks:
-                return self.save_bookmarks(bookmarks)
-            return False
+
+            if not bookmarks:
+                return False
+
+            # If bookmarks is not a list, wrap it in a list for consistent storage
+            if not isinstance(bookmarks, list):
+                bookmarks = [bookmarks]
+
+            return self.save_bookmarks(bookmarks)
         except Exception as e:
             print(f"Error importing bookmarks YAML: {e}")
             return False
