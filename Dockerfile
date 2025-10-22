@@ -3,9 +3,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy and install dependencies in one layer
+# Install build dependencies, install Python packages, then clean up
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc g++ libffi-dev && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y --auto-remove gcc g++ libffi-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
     mkdir -p /app/config /app/uploads && \
     chmod -R 777 /app/config /app/uploads
 
