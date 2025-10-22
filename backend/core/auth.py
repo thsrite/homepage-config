@@ -1,29 +1,12 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.core.config import settings
 
-# Password hashing using Argon2 (pure Python, no compilation needed)
-ph = PasswordHasher()
-
 # JWT token bearer
 security = HTTPBearer()
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash"""
-    try:
-        ph.verify(hashed_password, plain_password)
-        return True
-    except VerifyMismatchError:
-        return False
-
-def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    return ph.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token"""
