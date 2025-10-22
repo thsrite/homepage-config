@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pathlib import Path
 import sys
 
@@ -10,7 +10,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from api import services, categories, import_export, preview, bookmarks, auth
 from core.config import settings
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_token
 from fastapi import Depends
 
 app = FastAPI(
@@ -43,16 +43,29 @@ app.include_router(import_export.router, prefix="/api/config", tags=["config"], 
 app.include_router(preview.router, prefix="/api/preview", tags=["preview"], dependencies=[Depends(get_current_user)])
 app.include_router(bookmarks.router, prefix="/api/bookmarks", tags=["bookmarks"], dependencies=[Depends(get_current_user)])
 
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    """Serve the main HTML page"""
-    html_path = Path(__file__).parent.parent / "frontend" / "index.html"
-    with open(html_path, "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+@app.get("/")
+async def root(request: Request):
+    """Serve the main HTML page or redirect to login"""
+    # Check if user has a valid token in Authorization header
+    auth_header = request.headers.get("Authorization")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "")
+        try:
+            verify_token(token)
+            # Token is valid, serve the main page
+            html_path = Path(__file__).parent.parent / "frontend" / "index.html"
+            with open(html_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        except:
+            pass
+
+    # No valid token, redirect to login
+    return RedirectResponse(url="/login", status_code=302)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page():
-    """Serve the login page"""
+    """Serve the login page (no authentication required)"""
     html_path = Path(__file__).parent.parent / "frontend" / "login.html"
     with open(html_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
