@@ -22,15 +22,12 @@
             <span class="navbar-brand mb-0 h1">
                 <i class="bi bi-house-gear-fill"></i> Homepage Configuration Tool
             </span>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-light" onclick="importConfig()">
-                    <i class="bi bi-upload"></i> Import
-                </button>
-                <button class="btn btn-outline-light" onclick="exportConfig()">
-                    <i class="bi bi-download"></i> Export
-                </button>
-                <button class="btn btn-success" onclick="saveConfig()">
-                    <i class="bi bi-save"></i> Save
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-light me-3">
+                    <i class="bi bi-person-circle"></i> <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-danger" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
                 </button>
             </div>
         </div>
@@ -60,10 +57,18 @@
                         <div class="tab-content" id="configTabContent">
                             <!-- Services Tab -->
                             <div class="tab-pane fade show active" id="services-content" role="tabpanel">
-                                <div class="d-flex justify-content-end mb-3">
+                                <div class="d-flex justify-content-between mb-3">
                                     <button class="btn btn-sm btn-primary" onclick="addCategory()">
                                         <i class="bi bi-plus-circle"></i> Add Category
                                     </button>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="importConfig()">
+                                            <i class="bi bi-upload"></i> Import
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="exportConfig()">
+                                            <i class="bi bi-download"></i> Export
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="categoriesContainer">
                                     <!-- Categories will be loaded here -->
@@ -319,6 +324,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
 
     <!-- Custom JS - Order is important! -->
+    <script src="/static/js/auth.js"></script>       <!-- Authentication first -->
     <script src="/static/js/dragdrop.js"></script>  <!-- Load dragdrop first to define functions -->
     <script src="/static/js/services.js"></script>   <!-- Service management functions -->
     <script src="/static/js/bookmarks.js"></script>  <!-- Bookmarks management functions -->

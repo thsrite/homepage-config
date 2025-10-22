@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Homepage Configuration Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .login-header h2 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            font-weight: 500;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .alert {
+            border-radius: 8px;
+        }
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-right: none;
+        }
+        .form-control {
+            border-left: none;
+        }
+        .password-toggle {
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border-left: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="bi bi-shield-lock"></i>
+                <h2>Welcome Back</h2>
+                <p>Homepage Configuration Tool</p>
+            </div>
+
+            <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                <i class="bi bi-exclamation-circle"></i>
+                <span id="errorMessage"></span>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" placeholder="Enter username" required autofocus>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                        <span class="input-group-text password-toggle" onclick="togglePassword()">
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-login w-100" id="loginBtn">
+                    <span id="loginText">Login</span>
+                    <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            }
+        }
+
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.classList.remove('d-none');
+
+            setTimeout(() => {
+                errorAlert.classList.add('d-none');
+            }, 5000);
+        }
+
+        function setLoading(loading) {
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+
+            if (loading) {
+                loginBtn.disabled = true;
+                loginText.classList.add('d-none');
+                loginSpinner.classList.remove('d-none');
+            } else {
+                loginBtn.disabled = false;
+                loginText.classList.remove('d-none');
+                loginSpinner.classList.add('d-none');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            setLoading(true);
+
+            try {
+                const response = await axios.post('/api/auth/login', {
+                    username,
+                    password
+                });
+
+                // Store token in localStorage
+                localStorage.setItem('access_token', response.data.access_token);
+
+                // Redirect to main page
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Login error:', error);
+
+                let errorMsg = 'Login failed. Please try again.';
+                if (error.response && error.response.data && error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+
+                showError(errorMsg);
+                setLoading(false);
+            }
+        });
+
+        // Check if already logged in
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            axios.get('/api/auth/verify', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(() => {
+                window.location.href = '/';
+            })
+            .catch(() => {
+                localStorage.removeItem('access_token');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -66,9 +66,11 @@ class BookmarksHandler:
 
     def parse_bookmarks(self, config: Union[List[Dict[str, Any]], Dict[str, Any]]) -> Dict[str, List[Dict]]:
         """Parse bookmarks from configuration into groups
-        Supports both formats:
+        Supports multiple formats:
         1. List format: [{"Developer": [...]}, {"Social": [...]}]
         2. Direct format: {"Developer": [...], "Social": [...]}
+        3. Nested list format: [{"Group": [{"name": {"abbr": "...", "href": "..."}}]}]
+        4. Abbr format: [{"Group": [[{"abbr": "...", "href": "..."}]]}]
         """
         result = {}
 
@@ -79,14 +81,35 @@ class BookmarksHandler:
                     result[group_name] = []
                     for bookmark in bookmarks:
                         if isinstance(bookmark, dict):
-                            for bookmark_name, bookmark_config in bookmark.items():
-                                # Convert numeric keys to strings
-                                bookmark_name = str(bookmark_name)
+                            # Check if this is abbr format directly {abbr:..., href:...}
+                            if 'abbr' in bookmark:
+                                bookmark_name = bookmark.get('abbr', '')
                                 parsed_bookmark = {
                                     'name': bookmark_name,
-                                    'config': bookmark_config if bookmark_config else {}
+                                    'config': bookmark
                                 }
                                 result[group_name].append(parsed_bookmark)
+                            else:
+                                # Standard format or nested format {name: [config]} or {name: config}
+                                for bookmark_name, bookmark_config in bookmark.items():
+                                    # Convert numeric keys to strings
+                                    bookmark_name = str(bookmark_name)
+
+                                    # Check if bookmark_config is a list (nested format)
+                                    if isinstance(bookmark_config, list) and len(bookmark_config) > 0:
+                                        # Get the first item (usually there's only one)
+                                        config_item = bookmark_config[0] if bookmark_config else {}
+                                        parsed_bookmark = {
+                                            'name': bookmark_name,
+                                            'config': config_item if config_item else {}
+                                        }
+                                    else:
+                                        # Direct config format
+                                        parsed_bookmark = {
+                                            'name': bookmark_name,
+                                            'config': bookmark_config if bookmark_config else {}
+                                        }
+                                    result[group_name].append(parsed_bookmark)
         # If config is a list (standard format)
         elif isinstance(config, list):
             for item in config:
@@ -96,19 +119,42 @@ class BookmarksHandler:
                             result[group_name] = []
                             for bookmark in bookmarks:
                                 if isinstance(bookmark, dict):
-                                    for bookmark_name, bookmark_config in bookmark.items():
-                                        # Convert numeric keys to strings
-                                        bookmark_name = str(bookmark_name)
+                                    # Check if this is abbr format directly {abbr:..., href:...}
+                                    if 'abbr' in bookmark:
+                                        bookmark_name = bookmark.get('abbr', '')
                                         parsed_bookmark = {
                                             'name': bookmark_name,
-                                            'config': bookmark_config if bookmark_config else {}
+                                            'config': bookmark
                                         }
                                         result[group_name].append(parsed_bookmark)
+                                    else:
+                                        # Standard format or nested format {name: [config]} or {name: config}
+                                        for bookmark_name, bookmark_config in bookmark.items():
+                                            # Convert numeric keys to strings
+                                            bookmark_name = str(bookmark_name)
+
+                                            # Check if bookmark_config is a list (nested format)
+                                            if isinstance(bookmark_config, list) and len(bookmark_config) > 0:
+                                                # Get the first item (usually there's only one)
+                                                config_item = bookmark_config[0] if bookmark_config else {}
+                                                parsed_bookmark = {
+                                                    'name': bookmark_name,
+                                                    'config': config_item if config_item else {}
+                                                }
+                                            else:
+                                                # Direct config format
+                                                parsed_bookmark = {
+                                                    'name': bookmark_name,
+                                                    'config': bookmark_config if bookmark_config else {}
+                                                }
+                                            result[group_name].append(parsed_bookmark)
 
         return result
 
     def build_bookmarks_config(self, groups: Dict[str, List[Dict]]) -> List[Dict[str, Any]]:
-        """Build bookmarks configuration from groups"""
+        """Build bookmarks configuration from groups
+        Preserves the nested list format if abbr is present in config
+        """
         config = []
 
         for group_name, bookmarks in groups.items():
@@ -116,8 +162,15 @@ class BookmarksHandler:
             for bookmark in bookmarks:
                 # Get bookmark config
                 bookmark_config = bookmark.get('config', {})
-                # Create bookmark entry with name as key
-                bookmark_dict = {bookmark['name']: bookmark_config}
+
+                # If config has 'abbr' field, use the nested list format
+                if 'abbr' in bookmark_config:
+                    # Nested format: {name: [config]}
+                    bookmark_dict = {bookmark['name']: [bookmark_config]}
+                else:
+                    # Standard format: {name: config}
+                    bookmark_dict = {bookmark['name']: bookmark_config}
+
                 group_bookmarks.append(bookmark_dict)
 
             config.append({group_name: group_bookmarks})

@@ -101,13 +101,13 @@ function createCategoryHTML(categoryName, services) {
                     ${categoryName}
                 </span>
                 <div class="category-actions">
-                    <button class="btn btn-sm btn-outline-primary" onclick="addService('${categoryName}')">
-                        <i class="bi bi-plus"></i> Add Service
+                    <button class="btn btn-sm btn-primary" onclick="addService('${categoryName}')">
+                        <i class="bi bi-plus"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="renameCategory('${categoryName}')">
+                    <button class="btn btn-sm btn-outline-primary" onclick="renameCategory('${categoryName}')">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory('${categoryName}')">
+                    <button class="btn btn-sm btn-danger" onclick="deleteCategory('${categoryName}')">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>

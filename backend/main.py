@@ -8,8 +8,10 @@ import sys
 # Add backend to path
 sys.path.append(str(Path(__file__).parent))
 
-from api import services, categories, import_export, preview, bookmarks
+from api import services, categories, import_export, preview, bookmarks, auth
 from core.config import settings
+from core.auth import get_current_user
+from fastapi import Depends
 
 app = FastAPI(
     title="Homepage Configuration Tool",
@@ -31,16 +33,27 @@ static_path = Path(__file__).parent.parent / "frontend" / "static"
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 # Include routers
-app.include_router(services.router, prefix="/api/services", tags=["services"])
-app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
-app.include_router(import_export.router, prefix="/api/config", tags=["config"])
-app.include_router(preview.router, prefix="/api/preview", tags=["preview"])
-app.include_router(bookmarks.router, prefix="/api/bookmarks", tags=["bookmarks"])
+# Auth router (no authentication required)
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+
+# Protected routers (authentication required)
+app.include_router(services.router, prefix="/api/services", tags=["services"], dependencies=[Depends(get_current_user)])
+app.include_router(categories.router, prefix="/api/categories", tags=["categories"], dependencies=[Depends(get_current_user)])
+app.include_router(import_export.router, prefix="/api/config", tags=["config"], dependencies=[Depends(get_current_user)])
+app.include_router(preview.router, prefix="/api/preview", tags=["preview"], dependencies=[Depends(get_current_user)])
+app.include_router(bookmarks.router, prefix="/api/bookmarks", tags=["bookmarks"], dependencies=[Depends(get_current_user)])
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """Serve the main HTML page"""
     html_path = Path(__file__).parent.parent / "frontend" / "index.html"
+    with open(html_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    """Serve the login page"""
+    html_path = Path(__file__).parent.parent / "frontend" / "login.html"
     with open(html_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 

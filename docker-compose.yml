@@ -12,6 +12,13 @@ services:
       - ./homepage/services.yaml:/app/config/services.yaml
       - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
     environment:
+      # Required: Authentication credentials
+      - AUTH_USERNAME=admin  # Change this!
+      - AUTH_PASSWORD=admin  # Change this!
+      # Optional: Session secret (change for production)
+      - SESSION_SECRET=change-this-to-a-random-secret-key
+      # Optional: Session expiration in minutes (default: 1440 = 24 hours)
+      - SESSION_EXPIRE_MINUTES=1440
       # Optional: Override port if needed
       - PORT=9835
       # Optional: Set debug mode

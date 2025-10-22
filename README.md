@@ -14,10 +14,12 @@ A web-based configuration tool for [Homepage](https://gethomepage.dev/) dashboar
 
 ## ✨ Features
 
+- 🔐 **Authentication** - Secure login with configurable username and password
 - 🎨 **Visual Configuration Editor** - Add, edit, and delete services through a user-friendly interface
 - 🔄 **Drag & Drop** - Reorder services and categories with drag-and-drop functionality
 - 👁️ **Live Homepage Preview** - Display your actual Homepage dashboard in an iframe for real-time preview
 - 📥 **Import/Export** - Import existing YAML configurations and export your changes
+- 🔖 **Bookmarks Management** - Manage Homepage bookmarks with dedicated UI
 - 🔧 **Widget Support** - Full support for all Homepage widget types including:
   - Media widgets (Emby, Jellyfin, Plex, etc.)
   - Download clients (qBittorrent, Transmission)
@@ -50,11 +52,15 @@ docker-compose up -d
 docker run -d \
   --name homepage-config \
   -p 9835:9835 \
+  -e AUTH_USERNAME=admin \
+  -e AUTH_PASSWORD=your-secure-password \
   -v ./homepage/services.yaml:/app/config/services.yaml \
   -v ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml \
   --restart unless-stopped \
   thsrite/homepage-config:latest
 ```
+
+**⚠️ Important: You MUST set AUTH_USERNAME and AUTH_PASSWORD environment variables!**
 
 ### Option 2: Docker Hub
 
@@ -62,6 +68,8 @@ docker run -d \
 docker run -d \
   --name homepage-config \
   -p 9835:9835 \
+  -e AUTH_USERNAME=admin \
+  -e AUTH_PASSWORD=your-secure-password \
   -v ./homepage/services.yaml:/app/config/services.yaml \
   -v ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml \
   thsrite/homepage-config:latest
@@ -92,9 +100,62 @@ pip install -r requirements.txt
 python3 run.py
 ```
 
-4. Open your browser and navigate to:
+4. Create a `.env` file with required authentication settings:
+```bash
+cp .env.example .env
+# Edit .env and set your username and password
+```
+
+5. Run the application:
+```bash
+python3 run.py
+```
+
+6. Open your browser and navigate to:
 ```
 http://localhost:9835
+```
+
+## 🔐 Authentication
+
+**Authentication is required for all deployments.** You must configure a username and password via environment variables.
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `AUTH_USERNAME` | ✅ Yes | - | Username for login |
+| `AUTH_PASSWORD` | ✅ Yes | - | Password for login |
+| `SESSION_SECRET` | No | auto-generated | Secret key for JWT tokens |
+| `SESSION_EXPIRE_MINUTES` | No | 1440 (24h) | Session expiration time in minutes |
+
+### Docker Compose Configuration
+
+Edit your `docker-compose.yml` to set authentication credentials:
+
+```yaml
+services:
+  homepage-config:
+    image: thsrite/homepage-config:latest
+    environment:
+      - AUTH_USERNAME=your-username  # Change this!
+      - AUTH_PASSWORD=your-password  # Change this!
+      - SESSION_SECRET=your-random-secret-key
+    ports:
+      - "9835:9835"
+    volumes:
+      - ./homepage/services.yaml:/app/config/services.yaml
+      - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
+```
+
+### Local Development
+
+For local development, create a `.env` file:
+
+```env
+AUTH_USERNAME=admin
+AUTH_PASSWORD=your-secure-password
+SESSION_SECRET=your-random-secret-key
 ```
 
 ## 📖 Usage

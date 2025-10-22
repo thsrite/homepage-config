@@ -62,6 +62,7 @@ async def get_group_bookmarks(group: str):
 async def create_bookmark(group: str, bookmark: BookmarkCreate):
     """Add a bookmark to a group"""
     bookmark_config = {
+        "abbr": bookmark.name,  # Add abbr field to match Homepage format
         "href": bookmark.href
     }
 
@@ -98,6 +99,12 @@ async def update_bookmark(group: str, bookmark_name: str, bookmark: BookmarkUpda
 
     # Update config
     bookmark_config = existing.get('config', {})
+
+    # Update name if changed
+    if bookmark.name and bookmark.name != bookmark_name:
+        bookmark_config["abbr"] = bookmark.name
+    elif "abbr" not in bookmark_config:
+        bookmark_config["abbr"] = bookmark_name
 
     if bookmark.href is not None:
         bookmark_config["href"] = bookmark.href
@@ -149,6 +156,28 @@ async def create_group(group: str):
         raise HTTPException(status_code=500, detail="Failed to create group")
 
     return {"message": "Group created successfully"}
+
+@router.put("/groups/{group}")
+async def rename_group(group: str, new_name: str = Body(..., embed=True)):
+    """Rename a bookmark group"""
+    bookmarks = bookmarks_handler.load_bookmarks()
+    groups = bookmarks_handler.parse_bookmarks(bookmarks)
+
+    if group not in groups:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    if new_name in groups:
+        raise HTTPException(status_code=400, detail="Group with new name already exists")
+
+    # Rename the group
+    groups[new_name] = groups.pop(group)
+    new_config = bookmarks_handler.build_bookmarks_config(groups)
+    success = bookmarks_handler.save_bookmarks(new_config)
+
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to rename group")
+
+    return {"message": "Group renamed successfully"}
 
 @router.delete("/groups/{group}")
 async def delete_group(group: str):

@@ -3,8 +3,8 @@
 // Load and display bookmarks
 async function loadBookmarks() {
     try {
-        const response = await fetch('/api/bookmarks/');
-        const groups = await response.json();
+        const response = await axios.get('/api/bookmarks/');
+        const groups = response.data;
 
         const container = document.getElementById('bookmarksContainer');
         container.innerHTML = '';
@@ -35,6 +35,9 @@ function createBookmarkGroupCard(group) {
             <div class="group-actions">
                 <button class="btn btn-sm btn-primary" onclick="showAddBookmarkModal('${group.name}')">
                     <i class="bi bi-plus"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="renameBookmarkGroup('${group.name}')">
+                    <i class="bi bi-pencil"></i>
                 </button>
                 <button class="btn btn-sm btn-danger" onclick="deleteBookmarkGroup('${group.name}')">
                     <i class="bi bi-trash"></i>
@@ -85,9 +88,8 @@ function showAddBookmarkModal(groupName) {
 // Edit bookmark
 async function editBookmark(groupName, bookmarkName) {
     try {
-        const response = await fetch(`/api/bookmarks/${groupName}`);
-        const data = await response.json();
-        const bookmark = data.bookmarks.find(b => b.name === bookmarkName);
+        const response = await axios.get(`/api/bookmarks/${groupName}`);
+        const bookmark = response.data.bookmarks.find(b => b.name === bookmarkName);
 
         if (!bookmark) {
             showToast('Bookmark not found', 'error');
@@ -124,30 +126,16 @@ async function saveBookmark() {
     };
 
     try {
-        let response;
         if (mode === 'add') {
-            response = await fetch(`/api/bookmarks/${groupName}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookmarkData)
-            });
+            await axios.post(`/api/bookmarks/${groupName}`, bookmarkData);
         } else {
             const originalName = form.dataset.originalName;
-            response = await fetch(`/api/bookmarks/${groupName}/${originalName}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookmarkData)
-            });
+            await axios.put(`/api/bookmarks/${groupName}/${originalName}`, bookmarkData);
         }
 
-        if (response.ok) {
-            showToast(`Bookmark ${mode === 'add' ? 'added' : 'updated'} successfully`, 'success');
-            bootstrap.Modal.getInstance(document.getElementById('bookmarkModal')).hide();
-            loadBookmarks();
-        } else {
-            const error = await response.json();
-            showToast(error.detail || 'Failed to save bookmark', 'error');
-        }
+        showToast(`Bookmark ${mode === 'add' ? 'added' : 'updated'} successfully`, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('bookmarkModal')).hide();
+        loadBookmarks();
     } catch (error) {
         console.error('Error saving bookmark:', error);
         showToast('Failed to save bookmark', 'error');
@@ -161,17 +149,9 @@ async function deleteBookmark(groupName, bookmarkName) {
     }
 
     try {
-        const response = await fetch(`/api/bookmarks/${groupName}/${bookmarkName}`, {
-            method: 'DELETE'
-        });
-
-        if (response.ok) {
-            showToast('Bookmark deleted successfully', 'success');
-            loadBookmarks();
-        } else {
-            const error = await response.json();
-            showToast(error.detail || 'Failed to delete bookmark', 'error');
-        }
+        await axios.delete(`/api/bookmarks/${groupName}/${bookmarkName}`);
+        showToast('Bookmark deleted successfully', 'success');
+        loadBookmarks();
     } catch (error) {
         console.error('Error deleting bookmark:', error);
         showToast('Failed to delete bookmark', 'error');
@@ -184,20 +164,27 @@ async function createBookmarkGroup() {
     if (!groupName) return;
 
     try {
-        const response = await fetch(`/api/bookmarks/groups/${groupName}`, {
-            method: 'POST'
-        });
-
-        if (response.ok) {
-            showToast('Group created successfully', 'success');
-            loadBookmarks();
-        } else {
-            const error = await response.json();
-            showToast(error.detail || 'Failed to create group', 'error');
-        }
+        await axios.post(`/api/bookmarks/groups/${groupName}`);
+        showToast('Group created successfully', 'success');
+        loadBookmarks();
     } catch (error) {
         console.error('Error creating group:', error);
-        showToast('Failed to create group', 'error');
+        showToast(error.response?.data?.detail || 'Failed to create group', 'error');
+    }
+}
+
+// Rename bookmark group
+async function renameBookmarkGroup(oldName) {
+    const newName = prompt(`Rename group "${oldName}" to:`, oldName);
+    if (!newName || newName === oldName) return;
+
+    try {
+        await axios.put(`/api/bookmarks/groups/${oldName}`, { new_name: newName });
+        showToast('Group renamed successfully', 'success');
+        loadBookmarks();
+    } catch (error) {
+        console.error('Error renaming group:', error);
+        showToast(error.response?.data?.detail || 'Failed to rename group', 'error');
     }
 }
 
@@ -208,28 +195,22 @@ async function deleteBookmarkGroup(groupName) {
     }
 
     try {
-        const response = await fetch(`/api/bookmarks/groups/${groupName}`, {
-            method: 'DELETE'
-        });
-
-        if (response.ok) {
-            showToast('Group deleted successfully', 'success');
-            loadBookmarks();
-        } else {
-            const error = await response.json();
-            showToast(error.detail || 'Failed to delete group', 'error');
-        }
+        await axios.delete(`/api/bookmarks/groups/${groupName}`);
+        showToast('Group deleted successfully', 'success');
+        loadBookmarks();
     } catch (error) {
         console.error('Error deleting group:', error);
-        showToast('Failed to delete group', 'error');
+        showToast(error.response?.data?.detail || 'Failed to delete group', 'error');
     }
 }
 
 // Export bookmarks
 async function exportBookmarks() {
     try {
-        const response = await fetch('/api/bookmarks/export');
-        const blob = await response.blob();
+        const response = await axios.get('/api/bookmarks/export', {
+            responseType: 'blob'
+        });
+        const blob = new Blob([response.data], { type: 'application/x-yaml' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -259,22 +240,15 @@ async function importBookmarks() {
         formData.append('file', file);
 
         try {
-            const response = await fetch('/api/bookmarks/import', {
-                method: 'POST',
-                body: formData
+            const response = await axios.post('/api/bookmarks/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                showToast(`Imported ${result.groups} groups with ${result.total_bookmarks} bookmarks`, 'success');
-                loadBookmarks();
-            } else {
-                const error = await response.json();
-                showToast(error.detail || 'Failed to import bookmarks', 'error');
-            }
+            showToast(`Imported ${response.data.groups} groups with ${response.data.total_bookmarks} bookmarks`, 'success');
+            loadBookmarks();
         } catch (error) {
             console.error('Error importing bookmarks:', error);
-            showToast('Failed to import bookmarks', 'error');
+            showToast(error.response?.data?.detail || 'Failed to import bookmarks', 'error');
         }
     };
 
