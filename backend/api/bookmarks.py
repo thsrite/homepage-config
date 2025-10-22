@@ -7,12 +7,117 @@ from core.bookmarks_handler import BookmarksHandler
 router = APIRouter()
 bookmarks_handler = BookmarksHandler()
 
+# Group management routes (more specific, must come first)
 @router.get("/groups")
 async def get_bookmark_groups():
     """Get all bookmark groups"""
     groups = bookmarks_handler.get_all_groups()
     return {"groups": groups}
 
+@router.post("/groups/{group}")
+async def create_group(group: str):
+    """Create a new bookmark group"""
+    bookmarks = bookmarks_handler.load_bookmarks()
+    groups = bookmarks_handler.parse_bookmarks(bookmarks)
+
+    if group in groups:
+        raise HTTPException(status_code=400, detail="Group already exists")
+
+    # Add empty group
+    groups[group] = []
+    new_config = bookmarks_handler.build_bookmarks_config(groups)
+    success = bookmarks_handler.save_bookmarks(new_config)
+
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to create group")
+
+    return {"message": "Group created successfully"}
+
+@router.put("/groups/{group}")
+async def rename_group(group: str, new_name: str = Body(..., embed=True)):
+    """Rename a bookmark group"""
+    bookmarks = bookmarks_handler.load_bookmarks()
+    groups = bookmarks_handler.parse_bookmarks(bookmarks)
+
+    if group not in groups:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    if new_name in groups:
+        raise HTTPException(status_code=400, detail="Group with new name already exists")
+
+    # Rename the group
+    groups[new_name] = groups.pop(group)
+    new_config = bookmarks_handler.build_bookmarks_config(groups)
+    success = bookmarks_handler.save_bookmarks(new_config)
+
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to rename group")
+
+    return {"message": "Group renamed successfully"}
+
+@router.delete("/groups/{group}")
+async def delete_group(group: str):
+    """Delete a bookmark group and all its bookmarks"""
+    bookmarks = bookmarks_handler.load_bookmarks()
+    groups = bookmarks_handler.parse_bookmarks(bookmarks)
+
+    if group not in groups:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    del groups[group]
+    new_config = bookmarks_handler.build_bookmarks_config(groups)
+    success = bookmarks_handler.save_bookmarks(new_config)
+
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete group")
+
+    return {"message": "Group deleted successfully"}
+
+# Export/Import routes (specific paths)
+@router.get("/export")
+async def export_bookmarks():
+    """Export bookmarks configuration as YAML file"""
+    yaml_content = bookmarks_handler.export_yaml()
+
+    return Response(
+        content=yaml_content,
+        media_type="application/x-yaml",
+        headers={
+            "Content-Disposition": "attachment; filename=bookmarks.yaml"
+        }
+    )
+
+@router.post("/import")
+async def import_bookmarks(file: UploadFile = File(...)):
+    """Import bookmarks from YAML file"""
+    if not file.filename.endswith(('.yaml', '.yml')):
+        raise HTTPException(status_code=400, detail="File must be a YAML file")
+
+    try:
+        contents = await file.read()
+        yaml_content = contents.decode('utf-8')
+
+        success = bookmarks_handler.import_yaml(yaml_content)
+
+        if success:
+            bookmarks = bookmarks_handler.load_bookmarks()
+            groups = bookmarks_handler.parse_bookmarks(bookmarks)
+
+            summary = {
+                "message": "Bookmarks imported successfully",
+                "groups": len(groups),
+                "total_bookmarks": sum(len(bookmarks) for bookmarks in groups.values())
+            }
+            return summary
+        else:
+            raise HTTPException(status_code=500, detail="Failed to import bookmarks")
+
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File encoding error")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+
+# General bookmarks routes
 @router.get("/")
 async def get_all_bookmarks():
     """Get all bookmarks organized by groups"""
@@ -36,6 +141,7 @@ async def get_all_bookmarks():
 
     return response
 
+# Group-specific bookmarks routes (less specific, must come after /groups/{group})
 @router.get("/{group}")
 async def get_group_bookmarks(group: str):
     """Get bookmarks for a specific group"""
@@ -137,105 +243,3 @@ async def delete_bookmark(group: str, bookmark_name: str):
         raise HTTPException(status_code=404, detail="Bookmark or group not found")
 
     return {"message": "Bookmark deleted successfully"}
-
-@router.post("/groups/{group}")
-async def create_group(group: str):
-    """Create a new bookmark group"""
-    bookmarks = bookmarks_handler.load_bookmarks()
-    groups = bookmarks_handler.parse_bookmarks(bookmarks)
-
-    if group in groups:
-        raise HTTPException(status_code=400, detail="Group already exists")
-
-    # Add empty group
-    groups[group] = []
-    new_config = bookmarks_handler.build_bookmarks_config(groups)
-    success = bookmarks_handler.save_bookmarks(new_config)
-
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to create group")
-
-    return {"message": "Group created successfully"}
-
-@router.put("/groups/{group}")
-async def rename_group(group: str, new_name: str = Body(..., embed=True)):
-    """Rename a bookmark group"""
-    bookmarks = bookmarks_handler.load_bookmarks()
-    groups = bookmarks_handler.parse_bookmarks(bookmarks)
-
-    if group not in groups:
-        raise HTTPException(status_code=404, detail="Group not found")
-
-    if new_name in groups:
-        raise HTTPException(status_code=400, detail="Group with new name already exists")
-
-    # Rename the group
-    groups[new_name] = groups.pop(group)
-    new_config = bookmarks_handler.build_bookmarks_config(groups)
-    success = bookmarks_handler.save_bookmarks(new_config)
-
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to rename group")
-
-    return {"message": "Group renamed successfully"}
-
-@router.delete("/groups/{group}")
-async def delete_group(group: str):
-    """Delete a bookmark group and all its bookmarks"""
-    bookmarks = bookmarks_handler.load_bookmarks()
-    groups = bookmarks_handler.parse_bookmarks(bookmarks)
-
-    if group not in groups:
-        raise HTTPException(status_code=404, detail="Group not found")
-
-    del groups[group]
-    new_config = bookmarks_handler.build_bookmarks_config(groups)
-    success = bookmarks_handler.save_bookmarks(new_config)
-
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to delete group")
-
-    return {"message": "Group deleted successfully"}
-
-@router.get("/export")
-async def export_bookmarks():
-    """Export bookmarks configuration as YAML file"""
-    yaml_content = bookmarks_handler.export_yaml()
-
-    return Response(
-        content=yaml_content,
-        media_type="application/x-yaml",
-        headers={
-            "Content-Disposition": "attachment; filename=bookmarks.yaml"
-        }
-    )
-
-@router.post("/import")
-async def import_bookmarks(file: UploadFile = File(...)):
-    """Import bookmarks from YAML file"""
-    if not file.filename.endswith(('.yaml', '.yml')):
-        raise HTTPException(status_code=400, detail="File must be a YAML file")
-
-    try:
-        contents = await file.read()
-        yaml_content = contents.decode('utf-8')
-
-        success = bookmarks_handler.import_yaml(yaml_content)
-
-        if success:
-            bookmarks = bookmarks_handler.load_bookmarks()
-            groups = bookmarks_handler.parse_bookmarks(bookmarks)
-
-            summary = {
-                "message": "Bookmarks imported successfully",
-                "groups": len(groups),
-                "total_bookmarks": sum(len(bookmarks) for bookmarks in groups.values())
-            }
-            return summary
-        else:
-            raise HTTPException(status_code=500, detail="Failed to import bookmarks")
-
-    except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="File encoding error")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")

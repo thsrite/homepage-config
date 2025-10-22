@@ -28,18 +28,21 @@ function createBookmarkGroupCard(group) {
     card.className = 'card bookmark-group-card mb-3';
     card.dataset.group = group.name;
 
+    // Escape single quotes in group name for onclick handlers
+    const escapedGroupName = group.name.replace(/'/g, "\\'");
+
     card.innerHTML = `
         <div class="bookmark-group-header">
             <span class="drag-handle">⋮</span>
             <span class="group-title">${group.name}</span>
             <div class="group-actions">
-                <button class="btn btn-sm btn-primary" onclick="showAddBookmarkModal('${group.name}')">
+                <button class="btn btn-sm btn-primary" onclick="showAddBookmarkModal('${escapedGroupName}')">
                     <i class="bi bi-plus"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-primary" onclick="renameBookmarkGroup('${group.name}')">
+                <button class="btn btn-sm btn-outline-primary" onclick="renameBookmarkGroup('${escapedGroupName}')">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteBookmarkGroup('${group.name}')">
+                <button class="btn btn-sm btn-danger" onclick="deleteBookmarkGroup('${escapedGroupName}')">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
@@ -54,6 +57,10 @@ function createBookmarkGroupCard(group) {
 
 // Create individual bookmark item
 function createBookmarkItem(groupName, bookmark) {
+    // Escape single quotes for onclick handlers
+    const escapedGroupName = groupName.replace(/'/g, "\\'");
+    const escapedBookmarkName = bookmark.name.replace(/'/g, "\\'");
+
     return `
         <div class="bookmark-item" data-bookmark="${bookmark.name}">
             <span class="bookmark-drag-handle">⋮</span>
@@ -63,10 +70,10 @@ function createBookmarkItem(groupName, bookmark) {
                 ${bookmark.description ? `<small class="text-muted">${bookmark.description}</small>` : ''}
             </div>
             <div class="bookmark-actions">
-                <button class="btn btn-sm btn-link" onclick="editBookmark('${groupName}', '${bookmark.name}')">
+                <button class="btn btn-sm btn-link" onclick="editBookmark('${escapedGroupName}', '${escapedBookmarkName}')">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-link text-danger" onclick="deleteBookmark('${groupName}', '${bookmark.name}')">
+                <button class="btn btn-sm btn-link text-danger" onclick="deleteBookmark('${escapedGroupName}', '${escapedBookmarkName}')">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
@@ -88,7 +95,8 @@ function showAddBookmarkModal(groupName) {
 // Edit bookmark
 async function editBookmark(groupName, bookmarkName) {
     try {
-        const response = await axios.get(`/api/bookmarks/${groupName}`);
+        const encodedGroupName = encodeURIComponent(groupName);
+        const response = await axios.get(`/api/bookmarks/${encodedGroupName}`);
         const bookmark = response.data.bookmarks.find(b => b.name === bookmarkName);
 
         if (!bookmark) {
@@ -126,11 +134,13 @@ async function saveBookmark() {
     };
 
     try {
+        const encodedGroupName = encodeURIComponent(groupName);
         if (mode === 'add') {
-            await axios.post(`/api/bookmarks/${groupName}`, bookmarkData);
+            await axios.post(`/api/bookmarks/${encodedGroupName}`, bookmarkData);
         } else {
             const originalName = form.dataset.originalName;
-            await axios.put(`/api/bookmarks/${groupName}/${originalName}`, bookmarkData);
+            const encodedOriginalName = encodeURIComponent(originalName);
+            await axios.put(`/api/bookmarks/${encodedGroupName}/${encodedOriginalName}`, bookmarkData);
         }
 
         showToast(`Bookmark ${mode === 'add' ? 'added' : 'updated'} successfully`, 'success');
@@ -149,7 +159,9 @@ async function deleteBookmark(groupName, bookmarkName) {
     }
 
     try {
-        await axios.delete(`/api/bookmarks/${groupName}/${bookmarkName}`);
+        const encodedGroupName = encodeURIComponent(groupName);
+        const encodedBookmarkName = encodeURIComponent(bookmarkName);
+        await axios.delete(`/api/bookmarks/${encodedGroupName}/${encodedBookmarkName}`);
         showToast('Bookmark deleted successfully', 'success');
         loadBookmarks();
     } catch (error) {
@@ -164,7 +176,8 @@ async function createBookmarkGroup() {
     if (!groupName) return;
 
     try {
-        await axios.post(`/api/bookmarks/groups/${groupName}`);
+        const encodedGroupName = encodeURIComponent(groupName);
+        await axios.post(`/api/bookmarks/groups/${encodedGroupName}`);
         showToast('Group created successfully', 'success');
         loadBookmarks();
     } catch (error) {
@@ -175,11 +188,15 @@ async function createBookmarkGroup() {
 
 // Rename bookmark group
 async function renameBookmarkGroup(oldName) {
+    console.log('Renaming group:', oldName);
     const newName = prompt(`Rename group "${oldName}" to:`, oldName);
     if (!newName || newName === oldName) return;
 
     try {
-        await axios.put(`/api/bookmarks/groups/${oldName}`, { new_name: newName });
+        // Encode the group name for URL
+        const encodedOldName = encodeURIComponent(oldName);
+        console.log('Encoded old name:', encodedOldName);
+        await axios.put(`/api/bookmarks/groups/${encodedOldName}`, { new_name: newName });
         showToast('Group renamed successfully', 'success');
         loadBookmarks();
     } catch (error) {
@@ -195,7 +212,9 @@ async function deleteBookmarkGroup(groupName) {
     }
 
     try {
-        await axios.delete(`/api/bookmarks/groups/${groupName}`);
+        // Encode the group name for URL
+        const encodedGroupName = encodeURIComponent(groupName);
+        await axios.delete(`/api/bookmarks/groups/${encodedGroupName}`);
         showToast('Group deleted successfully', 'success');
         loadBookmarks();
     } catch (error) {
