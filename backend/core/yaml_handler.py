@@ -52,6 +52,8 @@ class YAMLHandler:
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 self.yaml.dump(config, f)
 
+            print("[DEBUG] Config dumped, now processing comments...")
+
             # Post-process to handle commented fields and hidden services
             self._process_comments()
             return True
@@ -64,8 +66,6 @@ class YAMLHandler:
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-
-            print(f"\n=== PROCESS COMMENTS DEBUG ===")
 
             # First pass: identify services with healthCheckDisabled or hidden
             services_to_comment_fields = set()  # Services with healthCheckDisabled
@@ -87,15 +87,15 @@ class YAMLHandler:
 
                 # Check for healthCheckDisabled
                 if 'healthCheckDisabled: true' in line and current_service_start is not None:
+                    print(f"[DEBUG] Found healthCheckDisabled for {current_service_name}")
                     services_to_comment_fields.add(current_service_start)
 
                 # Check for hidden
                 if 'hidden: true' in line and current_service_start is not None:
-                    print(f"  Found 'hidden: true' for {current_service_name} at line {i}")
                     services_to_hide.add(current_service_start)
 
-            print(f"Services to hide: {[service_names.get(line) for line in services_to_hide]}")
-            print(f"Services to comment fields: {[service_names.get(line) for line in services_to_comment_fields]}")
+            if services_to_comment_fields:
+                print(f"[DEBUG] Services to comment health check fields: {[service_names.get(line) for line in services_to_comment_fields]}")
 
             # Second pass: comment out fields/services as needed, OR uncomment if should be visible
             new_lines = []
@@ -104,19 +104,21 @@ class YAMLHandler:
             service_to_hide = False
             in_hidden_service = False
             in_commented_service = False  # Track if we're in a commented service block
+            in_normal_service = False  # Track if we're in a normal service (for uncommenting health check fields)
             hidden_service_indent = 0
 
             for i, line in enumerate(lines):
                 stripped = line.strip()
                 indent_level = len(line) - len(line.lstrip())
 
-                # Check if we've exited the hidden/commented service
+                # Check if we've exited the hidden/commented/normal service
                 # Only exit when we hit another service definition line
-                if (in_hidden_service or in_commented_service):
+                if (in_hidden_service or in_commented_service or in_normal_service):
                     if indent_level <= 2 and (stripped.startswith('- ') or stripped.startswith('# - ')) and ':' in stripped:
                         # Exit service state when we reach a new service at the same level
                         in_hidden_service = False
                         in_commented_service = False
+                        in_normal_service = False
 
                 # Detect service start (indent level 2)
                 if indent_level == 2:
@@ -128,8 +130,7 @@ class YAMLHandler:
 
                         if not service_to_hide:
                             # This service is commented but should NOT be hidden
-                            # We need to uncomment it
-                            print(f"  Will uncomment service: {service_name}")
+                            # We need to uncomment it (skip the commented lines)
                             in_commented_service = True
                             hidden_service_indent = indent_level
                         else:
@@ -144,6 +145,10 @@ class YAMLHandler:
                         if service_to_hide:
                             in_hidden_service = True
                             hidden_service_indent = indent_level
+                        elif not service_to_comment_fields:
+                            # Normal service without healthCheckDisabled
+                            # May need to uncomment health check fields
+                            in_normal_service = True
 
                 # Skip healthCheckDisabled and hidden lines (internal flags)
                 if 'healthCheckDisabled:' in line or 'hidden:' in line:
@@ -173,6 +178,16 @@ class YAMLHandler:
                                 relative_indent = 0
                             line = f"  # {' ' * relative_indent}{line.lstrip()}"
 
+                # Uncomment health check fields if in a normal service (health check enabled)
+                elif in_normal_service:
+                    if stripped.startswith('#'):
+                        # Check if it's a commented health check field
+                        uncommented = stripped[1:].strip()
+                        if any(f'{field}:' in uncommented for field in ['ping', 'server', 'container']):
+                            # Remove the comment
+                            indent = line[:len(line) - len(line.lstrip())]
+                            line = f"{indent}{uncommented}\n"
+
                 # Comment out health check fields if this service is marked
                 elif service_to_comment_fields and any(f'{field}:' in stripped for field in ['ping', 'server', 'container']):
                     if not stripped.startswith('#'):
@@ -185,9 +200,6 @@ class YAMLHandler:
             # Write back
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
-
-            print(f"Wrote {len(new_lines)} lines to file")
-            print(f"=== END PROCESS COMMENTS ===\n")
 
         except Exception as e:
             print(f"Error processing comments: {e}")
@@ -330,10 +342,19 @@ class YAMLHandler:
                 # Detect commented health check fields (for non-hidden services)
                 if current_service and stripped.startswith('#') and current_service:
                     uncommented = stripped[1:].strip()
-                    if any(field in uncommented for field in ['ping:', 'server:', 'container:']):
-                        key = f"{current_category}:{current_service}"
-                        if key not in has_commented_fields:
-                            has_commented_fields[key] = True
+                    # Check if it's a health check field
+                    for field in ['ping:', 'server:', 'container:']:
+                        if field in uncommented and ':' in uncommented:
+                            key = f"{current_category}:{current_service}"
+                            if key not in has_commented_fields:
+                                has_commented_fields[key] = {}
+
+                            # Parse the field value
+                            field_name = field[:-1]  # Remove the ':'
+                            field_value = uncommented.split(':', 1)[1].strip()
+
+                            # Store the field and its value
+                            has_commented_fields[key][field_name] = field_value
 
                 i += 1
 
@@ -371,8 +392,12 @@ class YAMLHandler:
                                             key = f"{category_name}:{service_name}"
                                             if isinstance(service_config, dict):
                                                 # Mark services with commented health check fields
+                                                # and restore the field values from comments
                                                 if key in has_commented_fields:
                                                     service_config['healthCheckDisabled'] = True
+                                                    # Add back the commented field values
+                                                    for field_name, field_value in has_commented_fields[key].items():
+                                                        service_config[field_name] = field_value
                                                 # Mark hidden services
                                                 if key in hidden_services:
                                                     service_config['hidden'] = True
@@ -492,12 +517,6 @@ class YAMLHandler:
 
     def update_service(self, category: str, service_name: str, service_config: Dict) -> bool:
         """Update a service configuration"""
-        print(f"\n=== UPDATE SERVICE DEBUG ===")
-        print(f"Service: {category}/{service_name}")
-        print(f"New config has 'hidden': {'hidden' in service_config}")
-        if 'hidden' in service_config:
-            print(f"  hidden value: {service_config['hidden']}")
-
         config = self.load_config()
         categories = self.parse_services(config)
 
@@ -506,17 +525,9 @@ class YAMLHandler:
 
         for i, service in enumerate(categories[category]):
             if service['name'] == service_name:
-                print(f"Found service at index {i}")
-                print(f"Old config had 'hidden': {'hidden' in service.get('config', {})}")
-
                 categories[category][i]['config'] = service_config
-                print(f"After update, config has 'hidden': {'hidden' in categories[category][i]['config']}")
-
                 new_config = self.build_config(categories)
-                result = self.save_config(new_config)
-                print(f"Save result: {result}")
-                print(f"=== END DEBUG ===\n")
-                return result
+                return self.save_config(new_config)
 
         return False
 

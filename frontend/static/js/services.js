@@ -167,13 +167,30 @@ async function saveService() {
 
     // Handle Health Check fields
     if (document.getElementById('enableHealthCheck').checked) {
-        // Include Health Check fields when enabled
-        config.ping = document.getElementById('servicePing').value || undefined;
-        config.server = document.getElementById('serviceServer').value || undefined;
-        config.container = document.getElementById('serviceContainer').value || undefined;
+        // Include Health Check fields when enabled (remove healthCheckDisabled flag)
+        const ping = document.getElementById('servicePing').value;
+        const server = document.getElementById('serviceServer').value;
+        const container = document.getElementById('serviceContainer').value;
+
+        if (ping) config.ping = ping;
+        if (server) config.server = server;
+        if (container) config.container = container;
     } else {
-        // When disabled, add the healthCheckDisabled flag
-        // This tells the backend to comment out these fields in YAML
+        // When disabled, still save the values but add the healthCheckDisabled flag
+        // This tells the backend to comment out these fields in YAML but preserve their values
+        const ping = document.getElementById('servicePing').value;
+        const server = document.getElementById('serviceServer').value;
+        const container = document.getElementById('serviceContainer').value;
+
+        console.log('Health Check disabled - field values:', { ping, server, container });
+
+        // Always include the fields so backend knows they exist and should be commented
+        // Use empty string as fallback to ensure fields are present in config
+        config.ping = ping || '';
+        config.server = server || '';
+        config.container = container || '';
+
+        // Add flag to tell backend to comment these fields
         config.healthCheckDisabled = true;
     }
 
@@ -235,13 +252,15 @@ function loadCategoriesSelect(selectedCategory = null) {
 }
 
 // Toggle Health Check fields based on checkbox
-function toggleHealthCheckFields(clearValues = true) {
+function toggleHealthCheckFields(clearValues = false) {
     const enabled = document.getElementById('enableHealthCheck').checked;
     document.getElementById('servicePing').disabled = !enabled;
     document.getElementById('serviceServer').disabled = !enabled;
     document.getElementById('serviceContainer').disabled = !enabled;
 
-    // Clear values when disabled (only if clearValues is true)
+    // Note: We keep the values even when disabled
+    // This allows the backend to comment out these fields in YAML while preserving their values
+    // Only clear if explicitly requested (which should be rare)
     if (!enabled && clearValues) {
         document.getElementById('servicePing').value = '';
         document.getElementById('serviceServer').value = '';
