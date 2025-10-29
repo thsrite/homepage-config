@@ -11,6 +11,8 @@ services:
       # Mount config directory to persist configuration
       - ./homepage/services.yaml:/app/config/services.yaml
       - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
+      # Mount images directory for custom icons (change the host path as needed)
+      - /volume1/docker/homepage/image:/app/public/images
     environment:
       # Required: Authentication credentials
       - AUTH_USERNAME=admin  # Change this!

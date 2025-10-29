@@ -32,6 +32,11 @@ app.add_middleware(
 static_path = Path(__file__).parent.parent / "frontend" / "static"
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
+# Mount images directory for custom icons
+images_path = Path("/app/public/images")
+if images_path.exists():
+    app.mount("/images", StaticFiles(directory=str(images_path)), name="images")
+
 # Include routers
 # Auth router (no authentication required)
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])

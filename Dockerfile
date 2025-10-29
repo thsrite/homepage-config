@@ -26,8 +26,8 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /app/config /app/uploads && \
-    chmod -R 777 /app/config /app/uploads
+RUN mkdir -p /app/config /app/uploads /app/public/images && \
+    chmod -R 777 /app/config /app/uploads /app/public/images
 
 # Copy only necessary application files
 COPY backend ./backend

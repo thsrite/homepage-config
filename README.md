@@ -56,9 +56,12 @@ docker run -d \
   -e AUTH_PASSWORD=your-secure-password \
   -v ./homepage/services.yaml:/app/config/services.yaml \
   -v ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml \
+  -v /path/to/your/icons:/app/public/images \
   --restart unless-stopped \
   thsrite/homepage-config:latest
 ```
+
+**Note:** The `-v /path/to/your/icons:/app/public/images` mount is optional but required if you want to use local icon files with `/images/` paths.
 
 **⚠️ Important: You MUST set AUTH_USERNAME and AUTH_PASSWORD environment variables!**
 
@@ -72,6 +75,7 @@ docker run -d \
   -e AUTH_PASSWORD=your-secure-password \
   -v ./homepage/services.yaml:/app/config/services.yaml \
   -v ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml \
+  -v /path/to/your/icons:/app/public/images \
   thsrite/homepage-config:latest
 ```
 
@@ -146,6 +150,7 @@ services:
     volumes:
       - ./homepage/services.yaml:/app/config/services.yaml
       - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
+      - /path/to/your/icons:/app/public/images  # Optional: for local icons
 ```
 
 ### Local Development
@@ -171,7 +176,9 @@ SESSION_SECRET=your-random-secret-key
 1. Click **"Add Service"** within a category
 2. Fill in the service details:
    - **Service Name** - Display name for the service
-   - **Icon URL** - URL to the service icon image
+   - **Icon URL** - Icon for the service, supports:
+     - External URLs: `https://example.com/icon.png`
+     - Local images: `/images/myicon.png` (requires volume mount, see below)
    - **Service URL** - Link to access the service
    - **Health Check URL** - URL to check if service is online
    - **Server/Container** - Docker server and container names (optional)
@@ -246,10 +253,18 @@ services:
     volumes:
       - ./homepage/services.yaml:/app/config/services.yaml
       - ./homepage/bookmarks.yaml:/app/config/bookmarks.yaml
+      - /volume1/docker/homepage/image:/app/public/images  # Optional: for local icons
     environment:
       - PORT=9835
       - DEBUG=false
 ```
+
+**Using Local Icons:**
+To use local icon files instead of external URLs:
+1. Mount a directory to `/app/public/images` in the container
+2. Place your icon files in the mounted directory on the host
+3. Reference icons in the service configuration as `/images/filename.png`
+4. Example: If you have `/volume1/docker/homepage/image/myapp.png` on the host, use `/images/myapp.png` in the Icon URL field
 
 ## 🔧 Configuration
 
