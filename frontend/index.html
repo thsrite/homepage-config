@@ -171,29 +171,26 @@
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Health Check URL</label>
-                                <input type="url" class="form-control" id="servicePing" placeholder="http://10.0.0.2:8096">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Display Mode</label>
-                                <select class="form-select" id="serviceDisplay">
-                                    <option value="">Default</option>
-                                    <option value="list">List</option>
-                                    <option value="grid">Grid</option>
-                                </select>
-                            </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="enableHealthCheck" onchange="toggleHealthCheckFields()">
+                            <label class="form-check-label" for="enableHealthCheck">
+                                Enable Health Check
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Health Check URL</label>
+                            <input type="url" class="form-control" id="servicePing" placeholder="http://10.0.0.2:8096" disabled>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Server</label>
-                                <input type="text" class="form-control" id="serviceServer" placeholder="unraid">
+                                <input type="text" class="form-control" id="serviceServer" placeholder="unraid" disabled>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Container</label>
-                                <input type="text" class="form-control" id="serviceContainer" placeholder="container-name">
+                                <input type="text" class="form-control" id="serviceContainer" placeholder="container-name" disabled>
                             </div>
                         </div>
 
@@ -228,6 +225,14 @@
                                                 <option value="diskstation">Synology DiskStation</option>
                                                 <option value="tailscale">Tailscale</option>
                                                 <option value="openwrt">OpenWrt</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3" id="displayModeContainer" style="display: none;">
+                                            <label class="form-label">Display Mode</label>
+                                            <select class="form-select" id="serviceDisplay">
+                                                <option value="">Default</option>
+                                                <option value="list">List</option>
+                                                <option value="grid">Grid</option>
                                             </select>
                                         </div>
                                         <div id="widgetFields">

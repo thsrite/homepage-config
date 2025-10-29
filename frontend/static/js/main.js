@@ -132,20 +132,27 @@ function createServiceHTML(service, categoryName) {
         iconHTML = service.name[0].toUpperCase();
     }
 
+    // Add visual styling for hidden services
+    const hiddenStyle = config.hidden ? 'opacity: 0.5; background-color: #f8f9fa;' : '';
+    const hiddenBadge = config.hidden ? '<span class="badge bg-warning text-dark ms-2">Hidden in YAML</span>' : '';
+
     return `
-        <div class="service-item" data-service="${service.name}" data-category="${categoryName}">
+        <div class="service-item" data-service="${service.name}" data-category="${categoryName}" style="${hiddenStyle}">
             <i class="bi bi-grip-vertical drag-handle" style="cursor: move; margin-right: 10px; color: #6c757d;"></i>
             <div class="service-icon-preview">
                 ${iconHTML}
             </div>
             <div class="service-info">
-                <div class="service-name">${service.name}</div>
+                <div class="service-name">${service.name}${hiddenBadge}</div>
                 <div class="service-details">
                     ${config.widget ? `<span class="badge bg-info">${config.widget.type}</span>` : ''}
                     ${config.container ? `<span class="badge bg-secondary">${config.container}</span>` : ''}
                 </div>
             </div>
             <div class="service-actions">
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleServiceVisibility('${categoryName}', '${service.name}')" title="${config.hidden ? 'Show Service' : 'Hide Service'}">
+                    <i class="bi ${config.hidden ? 'bi-eye-slash' : 'bi-eye'}"></i>
+                </button>
                 <button class="btn btn-sm btn-outline-primary" onclick="editService('${categoryName}', '${service.name}')">
                     <i class="bi bi-pencil"></i>
                 </button>

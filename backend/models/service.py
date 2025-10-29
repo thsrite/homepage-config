@@ -12,6 +12,8 @@ class ServiceConfig(BaseModel):
     showStats: Optional[bool] = Field(None, description="Show statistics")
     display: Optional[str] = Field(None, description="Display mode (list, grid)")
     widget: Optional[WidgetConfig] = Field(None, description="Widget configuration")
+    healthCheckDisabled: Optional[bool] = Field(None, description="Internal flag to comment out health check fields")
+    hidden: Optional[bool] = Field(None, description="Hide service (comment out entire service in YAML)")
 
     class Config:
         json_schema_extra = {
