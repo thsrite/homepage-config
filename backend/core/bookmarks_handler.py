@@ -286,3 +286,48 @@ class BookmarksHandler:
         except Exception as e:
             print(f"Error importing bookmarks YAML: {e}")
             return False
+
+    def reorder_bookmarks(self, group: str, bookmark_order: List[str]) -> bool:
+        """Reorder bookmarks within a group"""
+        bookmarks = self.load_bookmarks()
+        groups = self.parse_bookmarks(bookmarks)
+
+        if group not in groups:
+            return False
+
+        # Create a mapping of bookmark names to bookmark objects
+        bookmark_map = {b['name']: b for b in groups[group]}
+
+        # Reorder bookmarks based on the provided order
+        reordered_bookmarks = []
+        for bookmark_name in bookmark_order:
+            if bookmark_name in bookmark_map:
+                reordered_bookmarks.append(bookmark_map[bookmark_name])
+
+        # Add any bookmarks that weren't in the order list (shouldn't happen, but safety)
+        for bookmark in groups[group]:
+            if bookmark['name'] not in bookmark_order:
+                reordered_bookmarks.append(bookmark)
+
+        groups[group] = reordered_bookmarks
+        new_config = self.build_bookmarks_config(groups)
+        return self.save_bookmarks(new_config)
+
+    def reorder_groups(self, group_order: List[str]) -> bool:
+        """Reorder bookmark groups"""
+        bookmarks = self.load_bookmarks()
+        groups = self.parse_bookmarks(bookmarks)
+
+        # Create a new ordered groups dict
+        ordered_groups = {}
+        for group_name in group_order:
+            if group_name in groups:
+                ordered_groups[group_name] = groups[group_name]
+
+        # Add any groups that weren't in the order list (shouldn't happen, but safety)
+        for group_name, group_bookmarks in groups.items():
+            if group_name not in group_order:
+                ordered_groups[group_name] = group_bookmarks
+
+        new_config = self.build_bookmarks_config(ordered_groups)
+        return self.save_bookmarks(new_config)

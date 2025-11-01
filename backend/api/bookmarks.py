@@ -1,11 +1,32 @@
 from fastapi import APIRouter, HTTPException, Body, UploadFile, File
 from fastapi.responses import Response
 from typing import List, Dict, Any
-from models import BookmarkCreate, BookmarkUpdate
+from models import BookmarkCreate, BookmarkUpdate, BookmarkReorder, BookmarkGroupReorder
 from core.bookmarks_handler import BookmarksHandler
 
 router = APIRouter()
 bookmarks_handler = BookmarksHandler()
+
+# Reorder routes (most specific, must come first)
+@router.post("/reorder")
+async def reorder_bookmark_groups(reorder_data: BookmarkGroupReorder):
+    """Reorder bookmark groups"""
+    success = bookmarks_handler.reorder_groups(reorder_data.group_order)
+
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to reorder groups")
+
+    return {"message": "Groups reordered successfully"}
+
+@router.post("/reorder/group")
+async def reorder_group_bookmarks(reorder_data: BookmarkReorder):
+    """Reorder bookmarks within a group"""
+    success = bookmarks_handler.reorder_bookmarks(reorder_data.group, reorder_data.bookmark_order)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Group not found or reorder failed")
+
+    return {"message": "Bookmarks reordered successfully"}
 
 # Group management routes (more specific, must come first)
 @router.get("/groups")

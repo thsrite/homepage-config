@@ -31,3 +31,12 @@ class BookmarkGroupCreate(BaseModel):
     """Model for creating a bookmark group"""
     name: str
     bookmarks: List[BookmarkCreate] = []
+
+class BookmarkReorder(BaseModel):
+    """Model for reordering bookmarks within a group"""
+    group: str = Field(..., description="Group name")
+    bookmark_order: List[str] = Field(..., description="Ordered list of bookmark names")
+
+class BookmarkGroupReorder(BaseModel):
+    """Model for reordering bookmark groups"""
+    group_order: List[str] = Field(..., description="Ordered list of group names")

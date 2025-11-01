@@ -312,10 +312,43 @@ function setupBookmarksDragDrop() {
     }
 }
 
-// Save bookmark order (implement if needed)
+// Save bookmark order
 async function saveBookmarkOrder() {
-    // This would save the new order to the backend
-    console.log('Bookmark order changed');
+    try {
+        // Collect group order
+        const groupContainer = document.getElementById('bookmarksContainer');
+        const groupCards = groupContainer.querySelectorAll('.bookmark-group-card');
+        const groupOrder = Array.from(groupCards).map(card => card.dataset.group);
+
+        // Save group order
+        await axios.post('/api/bookmarks/reorder', {
+            group_order: groupOrder
+        });
+
+        // Collect bookmark order for each group
+        for (const groupCard of groupCards) {
+            const groupName = groupCard.dataset.group;
+            const itemsContainer = document.getElementById(`group-${groupName}`);
+
+            if (itemsContainer) {
+                const bookmarkItems = itemsContainer.querySelectorAll('.bookmark-item');
+                const bookmarkOrder = Array.from(bookmarkItems).map(item => item.dataset.bookmark);
+
+                // Save bookmark order for this group
+                await axios.post('/api/bookmarks/reorder/group', {
+                    group: groupName,
+                    bookmark_order: bookmarkOrder
+                });
+            }
+        }
+
+        showToast('Order saved successfully', 'success');
+    } catch (error) {
+        console.error('Error saving bookmark order:', error);
+        showToast('Failed to save order', 'error');
+        // Reload to revert changes
+        loadBookmarks();
+    }
 }
 
 // Show toast notification
